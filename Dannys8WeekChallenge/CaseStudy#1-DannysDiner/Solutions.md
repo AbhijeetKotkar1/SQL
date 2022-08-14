@@ -46,3 +46,38 @@ join test.dbo.menu m
 group by s.product_id, m.product_name
 ORDER BY most_purchased DESC;
 ```
+
+**5. Which item was the most popular for each customer?**
+``` sql
+WITH rank_cte_group AS
+(
+ SELECT s.customer_id, m.product_name, 
+  COUNT(m.product_id) AS order_count,
+  DENSE_RANK() OVER(PARTITION BY s.customer_id
+  ORDER BY COUNT(s.customer_id) DESC) AS rank
+FROM test.dbo.menu AS m
+JOIN test.dbo.sales AS s
+ ON m.product_id = s.product_id
+GROUP BY s.customer_id, m.product_name
+)
+
+SELECT customer_id, product_name, order_count
+FROM rank_cte_group 
+WHERE rank = 1;
+
+```
+
+**6. Which item was purchased first by the customer after they became a member?**
+``` sql
+WITH cte as (
+select  s.customer_id, me.product_name, DENSE_RANK() OVER (PARTITION BY s.customer_id ORDER BY order_date) as rank
+from test.dbo.sales s 
+inner join test.dbo.members m 
+on s.customer_id = m.customer_id
+inner join test.dbo.menu me
+on s.product_id = me.product_id
+where order_date >= join_date
+)
+
+select customer_id, product_name from cte where rank = 1
+```
