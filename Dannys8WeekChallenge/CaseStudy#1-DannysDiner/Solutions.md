@@ -81,3 +81,18 @@ where order_date >= join_date
 
 select customer_id, product_name from cte where rank = 1
 ```
+
+**7. Which item was purchased just before the customer became a member?**
+``` sql
+WITH cte as (
+select  s.customer_id, me.product_name, DENSE_RANK() OVER (PARTITION BY s.customer_id ORDER BY order_date desc) as rank
+from test.dbo.sales s 
+inner join test.dbo.members m 
+on s.customer_id = m.customer_id
+inner join test.dbo.menu me
+on s.product_id = me.product_id
+where order_date < join_date
+)
+
+select customer_id, product_name from cte where rank = 1
+```
